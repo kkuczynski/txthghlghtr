@@ -1,0 +1,73 @@
+<div class=left>
+  
+ <div class=buttonlike>
+   <br>
+  <label class="custom-file-upload" border-style: solid>
+    
+    <input type="file" (change)="onChange($event.target.files)">
+   .txt
+  </label>
+</div>
+  <div class=options>
+    <div class=_1>
+      1
+    </div>
+    <div class=_2>
+      2
+    </div>
+    <div class=_3>
+      3
+    </div>
+    <div class=_4>
+      4
+    </div>
+    <div class=_5>
+      5
+    </div>
+    <div class=_6>
+      6
+    </div>
+    <div class=_7>
+      7
+    </div>
+    <div class=_8>
+      8
+    </div>
+    <div class=_9>
+      9
+    </div>
+    <div class=_0>
+      0
+    </div>
+    <div class=_Q>
+      Q
+    </div>
+    <div class=_W>
+      W
+    </div>
+    <div class=_E>
+      E
+    </div>
+    <div class=_R>
+      R
+    </div>
+    <div class=_T>
+      T
+    </div>
+    <div class=_Y>
+      Y
+    </div>
+    <!-- <div class=_Z>
+        Z
+      </div>   -->
+    <br>
+    <br>
+  </div>
+  <div>
+    <button (click)=jsonOnClick()>.json</button>
+  </div>
+</div>
+<div class="right">
+
+  <pre> {{fileContent}} </pre>
+</div>
