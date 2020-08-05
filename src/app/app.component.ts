@@ -8,6 +8,7 @@ import { Component } from '@angular/core';
 export class AppComponent {
   private array: ArrayStruct[] = [];
   private lastEndOffset = 0;
+  private id = 0;
   constructor() {
     this.initArray();
     window.addEventListener('keydown', (keyEvent: KeyboardEvent) => {
@@ -97,23 +98,23 @@ export class AppComponent {
       self.fileContent = fileReader.result as string;
     };
     fileReader.readAsText(file);
-    this.getPositionInDocument();
+    
   }
 
   selectedHighlight(rgb: string, choice: string) {
     if (window.getSelection) {
-      var sel, range: Range, node, range2;
+      var sel, range: Range, node: Node, range2;
       sel = window.getSelection();
       if (sel.getRangeAt && sel.rangeCount) {
         range = window.getSelection().getRangeAt(0);
         if (choice.charCodeAt(0) > 47 && choice.charCodeAt(0) < 58) {  // ascii digits
-          var html = '<span style="color: rgb(' + rgb + ');">' + range + '</span>';
+          var html = '<span id="'+this.id+'" style="color: rgb(' + rgb + ');">' + range + '</span>';
         }
         else if (choice.charCodeAt(0) > 64 && choice.charCodeAt(0) < 90) { // ascii A-Y
-          var html = '<span style="background-color: rgb(' + rgb + '); color: rgb(30,30,30);">' + range + '</span>';
+          var html = '<span id="'+this.id+'" style="background-color: rgb(' + rgb + '); color: rgb(30,30,30);">' + range + '</span>';
         }
         else if (choice.charCodeAt(0) === 90) {} // ascii Z
-          var html = '<span style="background-color: rgb(30,30,30); color: rgb(' + rgb + ');">' + range + '</span>';
+          var html = '<span id="'+this.id+'" style="background-color: rgb(30,30,30); color: rgb(' + rgb + ');">' + range + '</span>';
         }
         this.array.forEach(struct => {
           if (struct.key === choice) {
@@ -127,13 +128,14 @@ export class AppComponent {
         var el = document.createElement("div");
         el.innerHTML = html;
         var frag = document.createDocumentFragment(),
-          node, lastNode;
+          lastNode;
         while ((node = el.firstChild)) {
-          lastNode = frag.appendChild(node);
+          lastNode = frag.appendChild(node);          
           console.log(lastNode);
         }
         range.insertNode(frag);
-        this.getPositionInDocument();
+        this.getPositionInDocument(this.id);
+        this.id++;
       }
     }
   
@@ -149,10 +151,10 @@ export class AppComponent {
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
   }
-
-  getPositionInDocument() {
-    let value = document.getElementById('pre');
-    console.log(value);
+// TODODODODDO
+  getPositionInDocument(id: number) {    
+    console.log(document.getElementById(id.toString()));
+    console.log(document.getElementById(id.toString()).previousSibling.nodeValue.length);
   }
 }
 
