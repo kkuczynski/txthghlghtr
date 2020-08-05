@@ -61,7 +61,7 @@ export class AppComponent {
           this.selectedHighlight('150,250,200', 'Y');
           break;
         case 'z':
-          this.selectedHighlight('240,240,240', null);
+          this.selectedHighlight('240,240,240', 'Z');
       }
     });
   }
@@ -97,28 +97,28 @@ export class AppComponent {
       self.fileContent = fileReader.result as string;
     };
     fileReader.readAsText(file);
+    this.getPositionInDocument();
   }
 
   selectedHighlight(rgb: string, choice: string) {
     if (window.getSelection) {
-      var sel, range: Range, node;
+      var sel, range: Range, node, range2;
       sel = window.getSelection();
       if (sel.getRangeAt && sel.rangeCount) {
-        range = window.getSelection().getRangeAt(0);        
+        range = window.getSelection().getRangeAt(0);
         if (choice.charCodeAt(0) > 47 && choice.charCodeAt(0) < 58) {  // ascii digits
           var html = '<span style="color: rgb(' + rgb + ');">' + range + '</span>';
-
         }
         else if (choice.charCodeAt(0) > 64 && choice.charCodeAt(0) < 90) { // ascii A-Y
           var html = '<span style="background-color: rgb(' + rgb + '); color: rgb(30,30,30);">' + range + '</span>';
         }
-        else { // Z
+        else if (choice.charCodeAt(0) === 90) {} // ascii Z
           var html = '<span style="background-color: rgb(30,30,30); color: rgb(' + rgb + ');">' + range + '</span>';
         }
         this.array.forEach(struct => {
           if (struct.key === choice) {
             console.log(range);
-
+            
             struct.addRanges(range.startOffset + this.lastEndOffset, range.endOffset + this.lastEndOffset);
             this.lastEndOffset = range.endOffset;
           }
@@ -130,11 +130,14 @@ export class AppComponent {
           node, lastNode;
         while ((node = el.firstChild)) {
           lastNode = frag.appendChild(node);
+          console.log(lastNode);
         }
         range.insertNode(frag);
+        this.getPositionInDocument();
       }
     }
-  }
+  
+
   jsonOnClick() {
     const json = JSON.stringify(this.array);
     console.log(json);
@@ -145,6 +148,11 @@ export class AppComponent {
     document.body.appendChild(downloadAnchorNode); // required for firefox
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
+  }
+
+  getPositionInDocument() {
+    let value = document.getElementById('pre');
+    console.log(value);
   }
 }
 
