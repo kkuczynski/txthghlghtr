@@ -9,6 +9,7 @@ export class AppComponent {
   private array: ArrayStruct[] = [];
   private lastEndOffset = 0;
   private id = 0;
+  private lengthToStart = 0;
   constructor() {
     this.initArray();
     window.addEventListener('keydown', (keyEvent: KeyboardEvent) => {
@@ -98,7 +99,7 @@ export class AppComponent {
       self.fileContent = fileReader.result as string;
     };
     fileReader.readAsText(file);
-    
+
   }
 
   selectedHighlight(rgb: string, choice: string) {
@@ -108,37 +109,37 @@ export class AppComponent {
       if (sel.getRangeAt && sel.rangeCount) {
         range = window.getSelection().getRangeAt(0);
         if (choice.charCodeAt(0) > 47 && choice.charCodeAt(0) < 58) {  // ascii digits
-          var html = '<span id="'+this.id+'" style="color: rgb(' + rgb + ');">' + range + '</span>';
+          var html = '<span id="' + this.id + '" style="color: rgb(' + rgb + ');">' + range + '</span>';
         }
         else if (choice.charCodeAt(0) > 64 && choice.charCodeAt(0) < 90) { // ascii A-Y
-          var html = '<span id="'+this.id+'" style="background-color: rgb(' + rgb + '); color: rgb(30,30,30);">' + range + '</span>';
+          var html = '<span id="' + this.id + '" style="background-color: rgb(' + rgb + '); color: rgb(30,30,30);">' + range + '</span>';
         }
-        else if (choice.charCodeAt(0) === 90) {} // ascii Z
-          var html = '<span id="'+this.id+'" style="background-color: rgb(30,30,30); color: rgb(' + rgb + ');">' + range + '</span>';
-        }
-        this.array.forEach(struct => {
-          if (struct.key === choice) {
-            console.log(range);
-            
-            struct.addRanges(range.startOffset + this.lastEndOffset, range.endOffset + this.lastEndOffset);
-            this.lastEndOffset = range.endOffset;
-          }
-        });
-        range.deleteContents();
-        var el = document.createElement("div");
-        el.innerHTML = html;
-        var frag = document.createDocumentFragment(),
-          lastNode;
-        while ((node = el.firstChild)) {
-          lastNode = frag.appendChild(node);          
-          console.log(lastNode);
-        }
-        range.insertNode(frag);
-        this.getPositionInDocument(this.id);
-        this.id++;
+        else if (choice.charCodeAt(0) === 90) { } // ascii Z
+        var html = '<span id="' + this.id + '" style="background-color: rgb(30,30,30); color: rgb(' + rgb + ');">' + range + '</span>';
       }
+      this.array.forEach(struct => {
+        if (struct.key === choice) {
+          console.log(range);
+
+          struct.addRanges(range.startOffset + this.lastEndOffset, range.endOffset + this.lastEndOffset);
+          this.lastEndOffset = range.endOffset;
+        }
+      });
+      range.deleteContents();
+      var el = document.createElement("div");
+      el.innerHTML = html;
+      var frag = document.createDocumentFragment(),
+        lastNode;
+      while ((node = el.firstChild)) {
+        lastNode = frag.appendChild(node);
+       // console.log(lastNode);
+      }
+      range.insertNode(frag);
+      this.getPositionInDocument(this.id);
+      this.id++;
     }
-  
+  }
+
 
   jsonOnClick() {
     const json = JSON.stringify(this.array);
@@ -151,10 +152,30 @@ export class AppComponent {
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
   }
-// TODODODODDO
-  getPositionInDocument(id: number) {    
-    console.log(document.getElementById(id.toString()));
-    console.log(document.getElementById(id.toString()).previousSibling.nodeValue.length);
+  // TODODODODDO
+  getPositionInDocument(id: number) {
+    //console.log(document.getElementById(id.toString()));
+    //console.log(document.getElementById(id.toString()).previousSibling);
+    this.lengthToStart = 0;
+    if (document.getElementById(id.toString()).previousSibling !== null) {
+      this.getAllPrevChildrenLength(document.getElementById(id.toString()));
+    }
+    //console.log(this.lengthToStart);
+  }
+
+  getAllPrevChildrenLength(node: Node) {
+    //this.lengthToStart += node.nodeValue.length;
+    if (node.previousSibling !== null) {
+      if(node.previousSibling.nodeName==='SPAN') {
+        console.log(node.previousSibling.firstChild.nodeValue.length);        
+      }
+      else if (node.previousSibling.nodeName==='#text') {
+        console.log(node.previousSibling.nodeValue.length);
+      }
+      
+      //console.log('in if');
+      this.getAllPrevChildrenLength(node.previousSibling)
+    }
   }
 }
 
