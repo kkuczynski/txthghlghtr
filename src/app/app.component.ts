@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { exit } from 'process';
+import { notEqual } from 'assert';
 
 @Component({
   selector: 'app-root',
@@ -10,6 +12,7 @@ export class AppComponent {
   private lastEndOffset = 0;
   private id = 0;
   private lengthToStart = 0;
+  private added = false;
   constructor() {
     this.initArray();
     window.addEventListener('keydown', (keyEvent: KeyboardEvent) => {
@@ -88,6 +91,7 @@ export class AppComponent {
     this.array.push(new ArrayStruct('R'));
     this.array.push(new ArrayStruct('T'));
     this.array.push(new ArrayStruct('Y'));
+    this.array.push(new ArrayStruct('Z'));
   }
 
 
@@ -104,46 +108,122 @@ export class AppComponent {
 
   selectedHighlight(rgb: string, choice: string) {
     if (window.getSelection) {
-      var sel, range: Range, node: Node, range2;
+      var sel, range: Range, node: Node, range2: Range;
       sel = window.getSelection();
       if (sel.getRangeAt && sel.rangeCount) {
         range = window.getSelection().getRangeAt(0);
+        range2 = range;
         if (choice.charCodeAt(0) > 47 && choice.charCodeAt(0) < 58) {  // ascii digits
-          var html = '<span id="' + this.id + '" style="color: rgb(' + rgb + ');">' + range + '</span>';
+          var html = '</span><span id="' + this.id + '" style="color: rgb(' + rgb + ');">' + range + '</span><span>';
         }
         else if (choice.charCodeAt(0) > 64 && choice.charCodeAt(0) < 90) { // ascii A-Y
-          var html = '<span id="' + this.id + '" style="background-color: rgb(' + rgb + '); color: rgb(30,30,30);">' + range + '</span>';
+          var html = '</span><span id="' + this.id + '" style="background-color: rgb(' + rgb + '); color: rgb(30,30,30);">' + range + '</span><span>';
         }
         else if (choice.charCodeAt(0) === 90) { } // ascii Z
-        var html = '<span id="' + this.id + '" style="background-color: rgb(30,30,30); color: rgb(' + rgb + ');">' + range + '</span>';
+        var html = '</span><span id="' + this.id + '" style="background-color: rgb(30,30,30); color: rgb(' + rgb + ');">' + range + '</span><span>';
       }
-      this.array.forEach(struct => {
-        if (struct.key === choice) {
-          console.log(range);
 
-          struct.addRanges(range.startOffset + this.lastEndOffset, range.endOffset + this.lastEndOffset);
-          this.lastEndOffset = range.endOffset;
-        }
-      });
       range.deleteContents();
-      var el = document.createElement("div");
+      var el = document.createElement('div');
       el.innerHTML = html;
+      console.log(el);
       var frag = document.createDocumentFragment(),
         lastNode;
       while ((node = el.firstChild)) {
-        lastNode = frag.appendChild(node);
-       // console.log(lastNode);
+        lastNode = frag.append(node);
+        
       }
       range.insertNode(frag);
-      this.getPositionInDocument(this.id);
+
+      this.getPositionInDocument(this.id, range);
+      this.addSelection(choice);
       this.id++;
+      this.added = false;
     }
   }
 
+  addSelection(choice: string) {
+    let newEnd = this.lengthToStart + document.getElementById(this.id.toString()).firstChild.nodeValue.length;
+    let newStart = this.lengthToStart + 1;
+    this.array.forEach(matchStruct => {
+      if (matchStruct.key === choice) {
+        //console.log(range);          
+        this.array.forEach(struct => {
+          struct.ranges.forEach(ranges => {
+            
+              //inserting new selection into existing one
+              if (newStart > ranges.start && newEnd < ranges.end) {
+                console.log('insert');
+                let tmpEnd = ranges.end;
+                ranges.end = this.lengthToStart;
+                struct.addRanges(newEnd + 1, tmpEnd);
+                console.log('old range: ');
+                console.log(struct);
+                console.log('new range: ');
+                console.log(matchStruct);
+               
+              }
+              //new selection cuts the end of other selection
+              else if (newStart > ranges.start && newStart < ranges.end && newEnd >= ranges.end) {
+                console.log('cut end');
+                ranges.end = newStart - 1;
+                //matchStruct.addRanges(newStart, newEnd)
+                console.log('old range: ');
+                console.log(struct);
+                console.log('new range: ');
+                console.log(matchStruct);
+                
+              }
+              //new selection cuts the beginning of other selection
+              else if (newStart <= ranges.start && ranges.start < newEnd && newEnd < ranges.end) {
+                console.log('cut begin');
+                ranges.start = newEnd + 1;
+                //matchStruct.addRanges(newStart, newEnd)
+                console.log('old range: ');
+                console.log(struct);
+                console.log('new range: ');
+                console.log(matchStruct);
+                
+              }
+              //new selection overrides old selection in whole
+              else if (newStart <= ranges.start && newEnd >= ranges.end) {
+                console.log('override');
+                ranges.start = -1;
+                ranges.end = -1;
+                //matchStruct.addRanges(newStart, newEnd);
+                console.log('old range: ');
+                console.log(struct);
+                console.log('new range: ');
+                console.log(matchStruct);
+                
+              }
+            
+          });
+        });
+        //no collision with other selections
+
+
+        matchStruct.addRanges(newStart, newEnd);
+        console.log(newStart, newEnd);
+      }
+      //console.log(matchStruct);
+    });
+  }
 
   jsonOnClick() {
-    const json = JSON.stringify(this.array);
-    console.log(json);
+    let counter = 0;
+    let stringToJson;
+    this.array.forEach(struct => {
+      if (struct.key != 'Z') {
+        if (counter > 0) {
+          stringToJson += ',\n'
+        }
+        stringToJson += struct.getFancyString;
+        counter++;
+      }
+    });
+    const json = JSON.stringify(stringToJson);
+    //console.log(json);
     var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(json);
     var downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
@@ -152,12 +232,12 @@ export class AppComponent {
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
   }
-  // TODODODODDO
-  getPositionInDocument(id: number) {
+
+  getPositionInDocument(id: number, range: Range) {
     //console.log(document.getElementById(id.toString()));
     //console.log(document.getElementById(id.toString()).previousSibling);
-    this.lengthToStart = 0;
-    if (document.getElementById(id.toString()).previousSibling !== null) {
+    this.lengthToStart = 0;    
+    if (document.getElementById(id.toString()).previousSibling !== null) {      
       this.getAllPrevChildrenLength(document.getElementById(id.toString()));
     }
     //console.log(this.lengthToStart);
@@ -166,32 +246,55 @@ export class AppComponent {
   getAllPrevChildrenLength(node: Node) {
     //this.lengthToStart += node.nodeValue.length;
     if (node.previousSibling !== null) {
-      if(node.previousSibling.nodeName==='SPAN') {
-        console.log(node.previousSibling.firstChild.nodeValue.length);        
+      if (node.previousSibling.nodeName === 'SPAN') {           
+        console.log('length:' + node.previousSibling.firstChild.nodeValue.length);
+        this.lengthToStart += node.previousSibling.firstChild.nodeValue.length;          
       }
-      else if (node.previousSibling.nodeName==='#text') {
-        console.log(node.previousSibling.nodeValue.length);
-      }
-      
-      //console.log('in if');
-      this.getAllPrevChildrenLength(node.previousSibling)
+      // else if (node.previousSibling.nodeName === '#text') {        
+      //   console.log('length:' + node.previousSibling.nodeValue.length);
+      //   this.lengthToStart += node.previousSibling.nodeValue.length;
+      // }
+      this.getAllPrevChildrenLength(node.previousSibling);
     }
   }
 }
 
 class ArrayStruct {
-  public ranges = '';
+  public ranges: Ranges[] = [];
   public key: string;
 
   constructor(key: string) {
     this.key = key;
+    this.addRanges(-1, -1);
   }
 
   addRanges(start: number, end: number) {
+    const newRanges = new Ranges(start, end);
+    this.ranges.push(newRanges);
+    //console.log(this.ranges);
+  }
+
+  getFancyString() {
+    let toJson: string = this.key + ':';
+    let counter = 0;
     if (this.ranges.length === 0) {
-      this.ranges = this.ranges + '[' + start + ',' + end + ']';
-    } else {
-      this.ranges = this.ranges + ',[' + start + ',' + end + ']';
+      toJson += '[]'
     }
+    else {
+      this.ranges.forEach(range => {
+        if (range.start > -1) {
+          toJson += '[' + range.start + '-' + range.end + ']'
+        }
+      });
+    }
+  }
+}
+
+class Ranges {
+  public start: number;
+  public end: number;
+  constructor(start: number, end: number) {
+    this.start = start;
+    this.end = end;
   }
 }
